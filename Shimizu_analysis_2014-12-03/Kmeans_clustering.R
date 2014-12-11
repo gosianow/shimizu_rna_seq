@@ -129,7 +129,9 @@ kmeans.clustering <- function(pam.x, new.samps, genes.full.description, colors.w
       max.pam.df <- max(pam.df[, -ncol(pam.df)])
     }
     
+    print(min.pam.df)
 
+    
 pdf(paste0(out.path,"/",out.name,"_Avg_Expression_in_cluster" ,i, ".pdf"), w=10, h=5) 
 for(c in 1:i){
   # c=1
@@ -138,7 +140,7 @@ for(c in 1:i){
   
   pam.df.tmp.avg <- apply(pam.df.tmp, 2, mean)
   se <- function(v){sd(v)/sqrt(length(v))}
-  pam.df.tmp.sd <- apply(pam.df.tmp, 2, sd)
+  pam.df.tmp.sd <- apply(pam.df.tmp, 2, se)
   
   gg.df <- data.frame(Time=new.samps$time_nr, Tree=new.samps$tree_ID, Mean=pam.df.tmp.avg, SD=pam.df.tmp.sd)
   
@@ -231,8 +233,11 @@ dev.off()
     
     return(pam.obj)
     
-  }, mc.cores=1)
+  }, mc.cores=mc.cores)
   
+
+
+
   
   save(pam.obj.all, file=paste0(out.path,"/",out.name,"_pam_obj.Rdata"))
   

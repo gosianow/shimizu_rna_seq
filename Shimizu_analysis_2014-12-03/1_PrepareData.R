@@ -7,41 +7,45 @@
 # + clustering
 # + GO analysis with topGO
 # + Fisher's exact tests
-
-
-
 # + RUV analysis 
 # + Fisher exact test for MolEcol clusters: Sh.l <-> Sh.b 
-
 # + CAMERA Gene set testing
-
 #####################################################################################################
 
 
 #####################################################################################################
-
+# BioC 3.0
 ### preparation of variables describing samples 
 
 #####################################################################################################
 
-setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
+RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+
+analysisPath <- "Analysis_2014-12-03"
+analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+dir.create(analysisPath, showWarnings = FALSE)
+setwd(analysisPath)
+
+
 
 ####################################################
 ### samps
 ####################################################
 
-dir.create("Samples_out")
+
+dir.create("Samples_out", recursive = TRUE)
 
 ### parse sample information
-samps <- read.table("Data/sample_list.csv", sep=";", stringsAsFactors=FALSE, header=TRUE)
+samps <- read.table(paste0(dataPath, "Samples/sample_list.csv"), sep=";", stringsAsFactors=FALSE, header=TRUE)
 head(samps)
 names(samps)
 
-### CORRECT THE DATE!!!
+### CORRECT THE DATE!!! (old dates are wrong)
 samps$year.month.day.old <- samps$year.month.day
 samps$year.month.day <- paste(substr(samps$sample_name, nchar(samps$sample_name)-1, nchar(samps$sample_name)), substr(samps$sample_name, nchar(samps$sample_name)-3, nchar(samps$sample_name)-2), substr(samps$sample_name, nchar(samps$sample_name)-5, nchar(samps$sample_name)-4), sep=".")
 
-samps[,c("sample_name","year.month.day", "year.month.day.old")]
+head(samps[,c("sample_name","year.month.day", "year.month.day.old")])
 
 
 # columns 8-16 come from Lambir_meteorological_data_...xls
@@ -71,13 +75,13 @@ trees.order <- data.frame(legend=c("990-control-leaf_bud", "1099-control-leaf_bu
 
 
 ### list of all unique days in 2008 and 2009
-ad <- read.table("Data/Unique_days.csv", sep=";")
+ad <- read.table(paste0(dataPath, "Unique_days.csv"), sep=";")
 all.days <- data.frame(days.ch = ad[,], days.nr = as.numeric(strptime(ad[,], "%d.%m.%y")))
 head(all.days)
 library(stringr)
 month.days <- all.days[str_sub(all.days[,1], 1, 2)=="01",]
 
-ad.short <- read.table("Data/Unique_days_short.csv", sep=";")
+ad.short <- read.table(paste0(dataPath, "Unique_days_short.csv"), sep=";")
 all.days.short <- data.frame(days.ch = ad.short[,], days.nr = as.numeric(strptime(ad.short[,], "%d.%m.%y")))
 head(all.days.short)
 library(stringr)
@@ -85,11 +89,55 @@ month.days.short <- all.days.short[str_sub(all.days.short[,1], 1, 2)=="01",]
 
 
 ####################################################
+### Rainfall & water deficit
+####################################################
+
+
+wd <- read.table(paste0(dataPath, "MeteorologicalData/Lambir_meteorological_data_200710-201001mod.txt"), stringsAsFactors=FALSE, header=TRUE, sep = "\t")
+head(wd)
+
+
+wd$time_ch <- strptime(wd$Date, "%d/%m/%y")
+wd$time_nr <- as.numeric(wd$time_ch)
+
+
+pdf("Plots_Samples/Water_deficit_raw.pdf", width = 10, height = 5)
+plot(wd$time_nr, wd$evaporation...rain..mm.30.days. , main="Water Deficit", xlab="Time", ylab="30-day moving total of water deficit (mm)", type="l", col="brown", lwd = 4)
+
+plot(wd$time_nr, wd$evaporation...rain..mm.30.days. , main="Water Deficit", xlab="Time", ylab="30-day moving total of water deficit (mm)", type="l", col="brown", lwd = 4,  xaxt = "n" )
+axis(side=1, at=month.days[,2], labels=month.days[,1])
+abline(v=new.samps$time_nr, col="grey")
+
+plot(wd$time_nr, wd$evaporation...rain..mm.30.days. , main="Water Deficit", xlab="Time", ylab="30-day moving total of water deficit (mm)", type="l", col="brown", lwd = 4 ,xlim=c(min(all.days.short[,2]), max(all.days.short[,2])),  xaxt = "n")
+axis(side=1, at=month.days[,2], labels=month.days[,1])
+abline(v=new.samps$time_nr, col="grey")
+
+dev.off()
+
+
+
+pdf("Plots_Samples/Rain_raw.pdf", width = 10, height = 5)
+
+plot(wd$time_nr, wd$Rain.mm.30.days. , main="Rainfall", xlab="Time", ylab="30-day moving total of rainfall (mm)", type="l", col="darkblue", lwd = 4 )
+
+plot(wd$time_nr, wd$Rain.mm.30.days. , main="Rainfall", xlab="Time", ylab="30-day moving total of rainfall (mm)", type="l", col="darkblue", lwd = 4,  xaxt = "n" )
+axis(side=1, at=month.days[,2], labels=month.days[,1])
+abline(v=new.samps$time_nr, col="grey")
+
+
+plot(wd$time_nr, wd$Rain.mm.30.days. , main="Rainfall", xlab="Time", ylab="30-day moving total of rainfall (mm)", type="l", col="darkblue", lwd = 4, xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), xaxt = "n" )
+axis(side=1, at=month.days[,2], labels=month.days[,1])
+abline(v=new.samps$time_nr, col="grey")
+
+dev.off()
+
+
+####################################################
 ### Soild Moisture
 ####################################################
 
 ### get soil moisture data
-sm <- read.table("Data/meteor/Soil_Moisture.csv", sep=";", stringsAsFactors=FALSE, header=TRUE)
+sm <- read.table(paste0(dataPath, "MeteorologicalData/Soil_Moisture.csv"), sep=";", stringsAsFactors=FALSE, header=TRUE)
 head(sm)
 sm <- sm[1:271,]
 
@@ -101,9 +149,9 @@ sm$time_nr <- as.numeric(sm$time_ch)
 
 
 ### plots of raw data
-dir.create(path="Plots_Raw", showWarnings=FALSE, recursive=TRUE)
+dir.create(path="Plots_Samples", showWarnings=FALSE, recursive=TRUE)
 
-pdf("Plots_Raw/Soil_moisture.pdf", width = 10, height = 5)
+pdf("Plots_Samples/Soil_moisture.pdf", width = 10, height = 5)
 plot(sm$time_nr, sm$DE970, type="l", col=trees.order$color[trees.order$tree_ID=="970"], ylim=c(-0.1,1.1), main="Soil Moisture", ylab="Soil moisture", xlab="Time", xaxt = "n", lwd=1.5)
 axis(side=1, at=month.days[,2], labels=month.days[,1])
 lines(sm$time_nr, sm$C970, col=trees.order$color[trees.order$tree_ID=="970"], lty=2, lwd=1.5)
@@ -116,69 +164,53 @@ legend("bottomleft", c("DE970", "C970","DE8266","C8266" ,"DE8212","C8212a" ,"C82
 dev.off()
 
 
-pdf("Plots_Raw/Soil_moisture_Control.pdf", width = 10, height = 5)
-plot(sm$time_nr, sm$C970, type="l", col=trees.order$color[trees.order$tree_ID=="970"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="Control trees", ylab="Soil moisture", xlab="Time",  xaxt = "n")
-axis(side=1, at=month.days[,2], labels=month.days[,1])
-lines(sm$time_nr, sm$C8266, col=trees.order$color[trees.order$tree_ID=="8266"])
-lines(sm$time_nr, sm$C8212a, col=trees.order$color[trees.order$tree_ID=="8212"])
-lines(sm$time_nr, sm$C8212b, col=trees.order$color[trees.order$tree_ID=="8212"])
-abline(v=new.samps$time_nr[new.samps$tree_ID %in% c(990, 1099, 1377)], col="grey")
-dev.off()
-
-pdf("Plots_Raw/Soil_moisture_DE970.pdf", width = 10, height = 5)
-plot(sm$time_nr, sm$DE970, type="l", col=trees.order$color[trees.order$tree_ID=="970"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="DE970", ylab="Soil moisture", xlab="Time",  xaxt = "n")
+pdf("Plots_Samples/Soil_moisture_DE970.pdf", width = 10, height = 5)
+plot(sm$time_nr, sm$DE970, type="l", col=trees.order$color[trees.order$tree_ID=="970"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="Tree 970", ylab="Soil moisture", xlab="Time",  xaxt = "n", lwd = 4, las=1, cex.lab=1.5)
+lines(sm$time_nr, sm$C970, type="l", col=trees.order$color[trees.order$tree_ID=="970"], lty=3, lwd = 4)
 axis(side=1, at=month.days[,2], labels=month.days[,1])
 abline(v=new.samps$time_nr[new.samps$tree_ID==970], col="grey")
 dev.off()
 
-pdf("Plots_Raw/Soil_moisture_DE8266.pdf", width = 10, height = 5)
-plot(sm$time_nr, sm$DE8266, type="l", col=trees.order$color[trees.order$tree_ID=="8266"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="DE8266", ylab="Soil moisture", xlab="Time",  xaxt = "n")
+
+pdf("Plots_Samples/Soil_moisture_DE8266.pdf", width = 10, height = 5)
+plot(sm$time_nr, sm$DE8266, type="l", col=trees.order$color[trees.order$tree_ID=="8266"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="Tree 8266", ylab="Soil moisture", xlab="Time",  xaxt = "n", lwd=4, las=1, cex.lab=1.5)
+lines(sm$time_nr, sm$C8266, col=trees.order$color[trees.order$tree_ID=="8266"], lty=3, lwd=4)
 axis(side=1, at=month.days[,2], labels=month.days[,1])
 abline(v=new.samps$time_nr[new.samps$tree_ID==8266], col="grey")
 dev.off()
 
-pdf("Plots_Raw/Soil_moisture_DE8212.pdf", width = 10, height = 5)
-plot(sm$time_nr, sm$DE8212, type="l", col=trees.order$color[trees.order$tree_ID=="8212"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="DE8212", ylab="Soil moisture", xlab="Time",  xaxt = "n")
+
+
+pdf("Plots_Samples/Soil_moisture_DE8212.pdf", width = 10, height = 5)
+plot(sm$time_nr, sm$DE8212, type="l", col=trees.order$color[trees.order$tree_ID=="8212"], ylim=c(0,1.1), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main="Tree 8212", ylab="Soil moisture", xlab="Time",  xaxt = "n", lwd=4, las=1, cex.lab=1.5)
+lines(sm$time_nr, sm$C8212a, col=trees.order$color[trees.order$tree_ID=="8212"], lty=3, lwd=4)
+lines(sm$time_nr, sm$C8212b, col=trees.order$color[trees.order$tree_ID=="8212"], lty=3, lwd=4)
 axis(side=1, at=month.days[,2], labels=month.days[,1])
 abline(v=new.samps$time_nr[new.samps$tree_ID==8212], col="grey")
 dev.off()
 
 
-# merge control samples
-control <- rbind(as.matrix(sm[!is.na(sm$C970), c("time_nr", "C970")]),
-                 as.matrix(sm[!is.na(sm$C8266), c("time_nr", "C8266")]),
-                 as.matrix(sm[!is.na(sm$C8212a), c("time_nr", "C8212a")]),
-                 as.matrix(sm[!is.na(sm$C8212b), c("time_nr", "C8212b")]))
-control <- as.data.frame(control)
-colnames(control) <- c("time_nr", "Soil.Moisture")
-control <- control[order(control$time_nr), ]
-
-
-
-### lowess for control
-dir.create("Plots_Interpolate")
-control.l <- lowess(control[,1], control[,2], f=0.02)
-
-pdf("Plots_Interpolate/Soil_moisture_Control_lowess.pdf", width = 10, height = 5)
-plot(control, col="grey", ylim=c(0,1.1), pch=20, main="Control trees", ylab="Soil moisture", xlab="Time",  xaxt = "n")
-axis(side=1, at=month.days[,2], labels=month.days[,1])
-lines(control.l, lwd=2)
-dev.off()
-
 
 # Interpolate and roll 
 
-source("/home/gosia/R/R_Shimizu_RNA_seq/Interpolate_and_roll.R")
+source(paste0(RPath, "Interpolate_and_roll.R"))
 
-new.samps.control <- interpolate.and.roll(intrp.x=control.l$x, intrp.y=control.l$y, intrp.points=all.days[,2], table1=new.samps[new.samps$drough.control=="control",], roll.days=c(14, 28), col.values="Soil.Moisture", plot.name="Control", color=trees.order$color[trees.order$tree_ID=="1377"])
+roll.days=c(14, 21, 28)
 
-new.samps.DE970 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE970, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 970,], roll.days=c(14, 28), col.values="Soil.Moisture", plot.name="DE970", color=trees.order$color[trees.order$tree_ID=="970"])
+new.samps.DE970 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE970, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 970,], roll.days=roll.days, col.values="Soil.Moisture", plot.name="Soil_MoistureDE970", color=trees.order$color[trees.order$tree_ID=="970"], month.days=month.days, all.days.short=all.days.short)
 
-new.samps.DE8212 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE8212, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 8212,], roll.days=c(14, 28), col.values="Soil.Moisture", plot.name="DE8212", color=trees.order$color[trees.order$tree_ID=="8212"])
+new.samps.DE8212 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE8212, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 8212,], roll.days=roll.days, col.values="Soil.Moisture", plot.name="Soil_MoistureDE8212", color=trees.order$color[trees.order$tree_ID=="8212"], month.days=month.days, all.days.short=all.days.short)
 
-new.samps.DE8266 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE8266, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 8266,], roll.days=c(14, 28), col.values="Soil.Moisture", plot.name="DE8266",  color=trees.order$color[trees.order$tree_ID=="8266"])
+new.samps.DE8266 <- interpolate.and.roll(intrp.x=sm$time_nr, intrp.y=sm$DE8266, intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == 8266,], roll.days=roll.days, col.values="Soil.Moisture", plot.name="Soil_MoistureDE8266",  color=trees.order$color[trees.order$tree_ID=="8266"], month.days=month.days, all.days.short=all.days.short)
 
-new.samps.sm <- rbind(new.samps.control, new.samps.DE970, new.samps.DE8212, new.samps.DE8266)
+
+new.samps.control <- new.samps[new.samps$drough.control == "control",]
+Soil.moisture.control <- data.frame(time_nr = new.samps.control$time_nr, matrix(NA, nrow = nrow(new.samps.control), ncol = (length(roll.days) + 1) ))
+colnames(Soil.moisture.control) <- c("time_nr", paste0("Soil.Moisture", c("", roll.days)))
+
+new.samps.control <- merge(new.samps.control, Soil.moisture.control, by="time_nr")
+
+new.samps.sm <- rbind(new.samps.DE970, new.samps.DE8212, new.samps.DE8266, new.samps.control)
 
 new.samps <- new.samps.sm
 
@@ -191,7 +223,7 @@ names(new.samps)
 
 ### prepare Mean.Water.Potential var 
 
-wp <- read.table("Data/meteor/Water_potential_from_Inoue.csv", sep=";", header=T)
+wp <- read.table(paste0(dataPath, "MeteorologicalData/Water_potential_from_Inoue.csv"), sep=";", header=T)
 head(wp)
 names(wp)
 
@@ -213,8 +245,8 @@ for(i in 1:length(tree.ids)){
   # i=5 
   tree.sampl <- paste(exp.tree.ids[i], "sMean", sep="")
   
-  pdf(paste("Plots_Raw/Water_potential_", exp.tree.ids[i], ".pdf", sep=""), width = 10, height = 5)
-  plot(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], type="l", col=trees.order$color[trees.order$tree_ID==tree.ids[i]], ylim=c(0.2,0.8), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main=exp.tree.ids[i], ylab="Mean Water Potential", xlab="Time", xaxt = "n")
+  pdf(paste("Plots_Samples/Water_potential_", exp.tree.ids[i], ".pdf", sep=""), width = 10, height = 5)
+  plot(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], type="l", col=trees.order$color[trees.order$tree_ID==tree.ids[i]], ylim=c(0.2,0.8), xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), main=paste0("Tree ",exp.tree.ids[i]), ylab="Mean Water Potential", xlab="Time", xaxt = "n", las=1, cex.lab=1.5, lwd=4)
   axis(side=1, at=month.days[,2], labels=month.days[,1])
   abline(v=new.samps$time_nr[new.samps$tree_ID==tree.ids[i]], col="grey")
   dev.off()
@@ -223,17 +255,17 @@ for(i in 1:length(tree.ids)){
 }
 
 
-pdf(paste("Plots_Raw/Water_potential.pdf", sep=""), width = 10, height = 5)
+pdf(paste("Plots_Samples/Water_potential.pdf", sep=""), width = 10, height = 5)
 i=1
 tree.sampl <- paste(exp.tree.ids[i], "sMean", sep="")
-plot(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], type="l", col=trees.order$color[trees.order$tree_ID==tree.ids[i]], ylim=c(0.2,0.8), xlim=c(min(wp$time_nr), max(wp$time_nr)), main="Water Potential", ylab="Mean Water Potential", xlab="Time", xaxt = "n")
+plot(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], type="l", col=trees.order$color[trees.order$tree_ID==tree.ids[i]], ylim=c(0.2,0.8), xlim=c(min(wp$time_nr), max(wp$time_nr)), main="Water Potential", ylab="Mean Water Potential", xlab="Time", xaxt = "n", las=1, cex.lab=1.5, lwd=3)
 axis(side=1, at=month.days[,2], labels=month.days[,1])
 for(i in 2:length(tree.ids)){
   # i=5
   tree.sampl <- paste(exp.tree.ids[i], "sMean", sep="")
-  lines(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], col=trees.order$color[trees.order$tree_ID==tree.ids[i]])
+  lines(wp$time_nr[!is.na(wp[,tree.sampl])], wp[!is.na(wp[,tree.sampl]), tree.sampl], col=trees.order$color[trees.order$tree_ID==tree.ids[i]], lwd=3)
 }
-legend("bottomleft", trees.order$legend[1:6], col=trees.order$color[1:6], lty=rep(1, 6) , cex=0.6)
+legend("bottomleft", trees.order$legend[1:6], col=trees.order$color[1:6], lty=rep(1, 6) , cex=0.8, lwd=4)
 dev.off()
 
 
@@ -270,6 +302,7 @@ for(i in 1:length(May12.trees)){
 wp <- rbind(wp, wp.temp)
 
 
+
 ### interpolation and rolled means 
 new.samps.wp <- NULL
 
@@ -277,11 +310,13 @@ new.samps.wp <- NULL
 for(i in 1:length(tree.ids)){
   # i=1
   tree.sampl <- paste(exp.tree.ids[i], "sMean", sep="")
-  new.samps.wp <- rbind(new.samps.wp, new.samps.wp.tmp <- interpolate.and.roll(intrp.x=wp$time_nr[!is.na(wp[,tree.sampl])], intrp.y=wp[!is.na(wp[,tree.sampl]),tree.sampl], intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == tree.ids[i],] , roll.days=c(14, 28), col.values="Water.Potential", plot.name=tree.sampl))
+  new.samps.wp <- rbind(new.samps.wp, new.samps.wp.tmp <- interpolate.and.roll(intrp.x=wp$time_nr[!is.na(wp[,tree.sampl])], intrp.y=wp[!is.na(wp[,tree.sampl]),tree.sampl], intrp.points=all.days[,2], table1=new.samps[new.samps$tree_ID == tree.ids[i],] , roll.days=c(14, 21, 28), col.values="Water.Potential", plot.name=paste0("Water_Potential",tree.sampl), month.days=month.days, all.days.short=all.days.short, color=trees.order$color[trees.order$tree_ID==tree.ids[i]]))
   
 }
 
 names(new.samps.wp)
+head(new.samps.wp)
+
 
 new.samps <- new.samps.wp
 
@@ -290,7 +325,7 @@ new.samps <- new.samps.wp
 ### Temperature
 ####################################################
 
-tempr <- read.table("Data/meteor/Lambir_temperature_data.csv", head=T, sep=";")
+tempr <- read.table(paste0(dataPath, "MeteorologicalData/Lambir_temperature_data.csv"), head=T, sep=";")
 head(tempr)
 
 library(stringr)
@@ -301,12 +336,12 @@ tempr$time_nr <- as.numeric(tempr$time_ch)
 tempr$time_hour <- substring(tempr$Time, 10, 11)
 tempr$time_hour_nr <- as.numeric(tempr$time_hour)
 
-pdf("Plots_Raw/Temperature_raw.pdf", width = 10, height = 5)
+pdf("Plots_Samples/Temperature_raw.pdf", width = 10, height = 5)
 plot(tempr$time_nr, tempr$Temp, pch=".", main="Temperature", xlab="Time", ylab="Temperature")
 #abline(v=new.samps$time_nr, col="grey")
 dev.off()
 
-pdf("Plots_Raw/Temperature_over_day.pdf", width = 10, height = 5)
+pdf("Plots_Samples/Temperature_over_day.pdf", width = 10, height = 5)
 boxplot(Temp ~ time_hour, data=tempr, xlab="Hour", ylab="Temperature")
 dev.off()
 
@@ -317,72 +352,99 @@ tempr.day <- data.frame(time_ch=days, time_nr=as.numeric(days) , TempAvg=0, Temp
 
 for(i in 1:nrow(tempr.day)){
   # i=1
-  tempr.day[i , "TempAvg"] <- mean(tempr$Temp[tempr$time_ch==days[i]])
-  tempr.day[i , "TempMax"] <- max(tempr$Temp[tempr$time_ch==days[i] & tempr$time_hour_nr %in% 10:18])
+  tempr.day[i , "TempAvg"] <- mean(tempr$Temp[tempr$time_ch==days[i] & tempr$time_hour_nr %in% 10:18])
   tempr.day[i , "TempMin"] <- min(tempr$Temp[tempr$time_ch==days[i] & tempr$time_hour_nr %in% 10:18])
 }
 
 
+### lowess 
+tempr.l <- list()
 
-### lowess for control
-dir.create("Plots_Interpolate")
-tempr.l <- lowess(tempr.day[,"time_nr"], tempr.day[,"TempAvg"], f=0.0.5)
+tempr.l[["TempAvg"]] <- lowess(tempr.day[,"time_nr"], tempr.day[,"TempAvg"], f=0.1)
 
-pdf("Plots_Interpolate/Temperature_lowess.pdf", width = 10, height = 5)
+pdf("Plots_Samples/Temperature_Avg_lowess.pdf", width = 10, height = 5)
 plot(tempr.day[,"time_nr"], tempr.day[,"TempAvg"], col="grey", pch=20, main="Control trees", ylab="Soil moisture", xlab="Time",  xaxt = "n")
 axis(side=1, at=month.days[,2], labels=month.days[,1])
-lines(tempr.l, lwd=2)
+lines(tempr.l[["TempAvg"]], lwd=2, col="darkred")
 dev.off()
-
-
 
 
 ### some plots of avg, max, min temperature
-pdf("Plots_Raw/Temperature_Avg.pdf", width = 10, height = 5)
+pdf("Plots_Samples/Temperature_Avg.pdf", width = 10, height = 5)
 plot(tempr.day$time_nr, tempr.day$TempAvg, pch=20, main="Average Temperature", xlab="Time", ylab="Temperature",xlim=c(min(all.days.short[,2]), max(all.days.short[,2])),  xaxt = "n")
 axis(side=1, at=month.days[,2], labels=month.days[,1])
+lines(tempr.l[["TempAvg"]], lwd=2, col="darkred")
 abline(v=new.samps$time_nr, col="grey")
 dev.off()
 
-pdf("Plots_Raw/Temperature_Max.pdf", width = 10, height = 5)
-plot(tempr.day$time_nr, tempr.day$TempMax, pch=20, main="Max Temperature between 10 and 18", xlab="Time", ylab="Temperature",xlim=c(min(all.days.short[,2]), max(all.days.short[,2])),  xaxt = "n")
+
+tempr.l[["TempMin"]] <- lowess(tempr.day[,"time_nr"], tempr.day[,"TempMin"], f=0.1)
+
+pdf("Plots_Samples/Temperature_Min_lowess.pdf", width = 10, height = 5)
+plot(tempr.day[,"time_nr"], tempr.day[,"TempMin"], col="grey", pch=20, main="Control trees", ylab="Soil moisture", xlab="Time",  xaxt = "n")
 axis(side=1, at=month.days[,2], labels=month.days[,1])
-abline(v=new.samps$time_nr, col="grey")
+lines(tempr.l[["TempMin"]], lwd=2, col="darkred")
 dev.off()
 
-pdf("Plots_Raw/Temperature_Min.pdf", width = 10, height = 5)
-plot(tempr.day$time_nr, tempr.day$TempMin, pch=20, main="Min Temperature between 10 and 18", xlab="Time", ylab="Temperature",xlim=c(min(all.days.short[,2]), max(all.days.short[,2])),  xaxt = "n")
+
+### some plots of avg, max, min temperature
+pdf("Plots_Samples/Temperature_Min.pdf", width = 10, height = 5)
+plot(tempr.day$time_nr, tempr.day$TempMin, pch=20, main="Min Temperature", xlab="Time", ylab="Temperature",xlim=c(min(all.days.short[,2]), max(all.days.short[,2])),  xaxt = "n")
 axis(side=1, at=month.days[,2], labels=month.days[,1])
+lines(tempr.l[["TempMin"]], lwd=2, col="darkred")
 abline(v=new.samps$time_nr, col="grey")
 dev.off()
 
+
+
+tempr.ll <- data.frame(time_nr = tempr.l$TempAvg$x, TempAvg = tempr.l$TempAvg$y, TempMin = tempr.l$TempMin$y)
+head(tempr.ll)
 
 ### rolled means of temperature
 
 library(zoo)
 
-roll.days = c(14, 28)
-variables = c("TempAvg", "TempMax", "TempMin")
+roll.days = c(14, 21, 28)
+variables = c("TempAvg", "TempMin")
+plots.path = "Plots_Samples_Interpolate"
+
+new.samps <- merge(new.samps, tempr.ll, by="time_nr", all.x = TRUE)
 
 for(v in variables){
   # v="TempAvg"
-  new.samps <- match.func(DF1=new.samps, col.match1="time_nr", DF2=tempr.day, col.match2="time_nr", col.values2=v)
+
+  pdf( paste0(plots.path, "/InterpRoll_", v,".pdf", sep="" ) , width = 10, height = 5)
   
   for(r in roll.days){
     # r=14
     name <- paste(v, r, sep="")
     tempr.day[, name] <- NA
     tempr.day[r:length(tempr.day[, name]), name] <- rollmean(tempr.day[,v], r)
-    
-    new.samps <- match.func(DF1=new.samps, col.match1="time_nr", DF2=tempr.day, col.match2="time_nr", col.values2=name)
+
+    plot(tempr.day$time_nr, tempr.day[,v], col=1, pch=20, ylab=v, xlab="Time", xlim=c(min(all.days.short[,2]), max(all.days.short[,2])), xaxt = "n", cex.lab=1.5, las=1, main=paste0("Roll over ", r, " days"))
+    axis(side=1, at=month.days[,2], labels=month.days[,1])
+    abline(v=new.samps$time_nr, col="grey")
+
+    lines(tempr.l[[v]], lwd=1, col="darkred", lty=3)
+
+      lines(tempr.day$time_nr, tempr.day[,name], col="darkred", lty=1, lwd=4)
+
   }
+  
+  
+  dev.off()
+  
+  new.samps <- merge(new.samps, tempr.day[,c("time_nr", paste(v, roll.days, sep=""))], by="time_nr")
 }
 
 head(new.samps)
 
+
+new.samps <- unique(new.samps)
+
 dir.create(path="Samples_out", showWarnings=F, recursive=T)
 
-save(new.samps, file="Samples_out/new_samps_interpolation.RData")
+# save(new.samps, file="Samples_out/new_samps_interpolation.RData")
 
 write.table(new.samps, "Samples_out/new_samps_interpolation.xls", sep="\t",  row.names = F)
 
@@ -396,12 +458,36 @@ write.table(new.samps, "Samples_out/new_samps_interpolation.xls", sep="\t",  row
 
 #####################################################################################################
 
-setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
+
+RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+
+analysisPath <- "Analysis_2014-12-03"
+analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+dir.create(analysisPath)
+setwd(analysisPath)
+
 
 ### samples & factors
 new.samps <- read.table("Samples_out/new_samps_interpolation.xls", header=TRUE, sep="\t", stringsAsFactors=FALSE)
 
 rownames(new.samps) <- new.samps$sample_name
+head(new.samps)
+
+
+### list of all unique days in 2008 and 2009
+ad <- read.table(paste0(dataPath, "/Unique_days.csv"), sep=";")
+all.days <- data.frame(days.ch = ad[,], days.nr = as.numeric(strptime(ad[,], "%d.%m.%y")))
+head(all.days)
+library(stringr)
+month.days <- all.days[str_sub(all.days[,1], 1, 2)=="01",]
+
+ad.short <- read.table(paste0(dataPath, "Unique_days_short.csv"), sep=";")
+all.days.short <- data.frame(days.ch = ad.short[,], days.nr = as.numeric(strptime(ad.short[,], "%d.%m.%y")))
+head(all.days.short)
+library(stringr)
+month.days.short <- all.days.short[str_sub(all.days.short[,1], 1, 2)=="01",]
+
 
 # colors reprezening WP level 
 
@@ -413,12 +499,29 @@ colors.wp$colors.wp[is.na(colors.wp$colors.wp)] <- "#838B8B"
 rownames(colors.wp) <- colors.wp$sample_name
 colors.wp <- colors.wp[,"colors.wp", drop=F]
 
-new.samps <- merge(new.samps, colors.wp, by=0, all.x=T)
+new.samps <- merge(new.samps, colors.wp, by=0, all.x=T)[,-1]
 rownames(new.samps) <- new.samps$sample_name
 
 
+
+# colors reprezening WP level 
+colors.palette <- as.character( colorRampPalette(c("orange","darkgreen"))(nrow(all.days.short)))
+names(colors.palette) <- all.days.short$days.nr
+
+colors.time <- new.samps[, c("sample_name", "time_nr")]
+
+colors.time$colors.time <- colors.palette[as.character(colors.time$time_nr)]
+
+colors.time <- colors.time[,"colors.time", drop=F]
+
+new.samps <- merge(new.samps, colors.time, by=0, all.x=T)[,-1]
+rownames(new.samps) <- new.samps$sample_name
+
+
+
+
 ### counts
-x <- read.table("Data/raw_data-clean.csv", sep=",", header=T, row.names=1)
+x <- read.table(paste0(dataPath, "Data_2013-07-01/raw_data-clean.csv"), sep=",", header=T, row.names=1)
 x <- x[, new.samps$sample_name]
 
 
@@ -437,7 +540,6 @@ d.cpm <- cpm(d.org, normalized.lib.sizes=TRUE)
 d.cpm.l <- log(d.cpm + min(d.cpm[d.cpm != 0]))
 
 
-
 flowered.samps <- c("E7_8266_20090416") # flowered sample
 control.samps <- rownames(new.samps[new.samps$drough.control=="control",])
 
@@ -446,44 +548,81 @@ control.samps <- rownames(new.samps[new.samps$drough.control=="control",])
 trees.order <- data.frame(legend=c("990-control-leaf_bud", "1099-control-leaf_bud", "1377-control-leaf_bud", "970-drought-leaf_bud", "8212-drought-leaf_bud", "8266-drought-leaf_bud", "8266-drought-flower_bud"), color=c("cyan3", "green3", "blue", "orange", "red", "magenta3", "darkmagenta"), pch=c(16, 16, 16, 18, 18, 18, 18), cex=c(1, 1, 1, 1, 1, 1, 2) , tree_ID = c("990", "1099", "1377", "970", "8212", "8266", ""), condition=c("C", "C","C", "DE", "DE", "DE", "DE"), stringsAsFactors=F) 
 
 
-### list of all unique days in 2008 and 2009
-ad <- read.table("Data/Unique_days.csv", sep=";")
-all.days <- data.frame(days.ch = ad[,], days.nr = as.numeric(strptime(ad[,], "%d.%m.%y")))
-head(all.days)
-library(stringr)
-month.days <- all.days[str_sub(all.days[,1], 1, 2)=="01",]
 
-ad.short <- read.table("Data/Unique_days_short.csv", sep=";")
-all.days.short <- data.frame(days.ch = ad.short[,], days.nr = as.numeric(strptime(ad.short[,], "%d.%m.%y")))
-head(all.days.short)
-library(stringr)
-month.days.short <- all.days.short[str_sub(all.days.short[,1], 1, 2)=="01",]
 
-###### files with control genes
 
-AT.id <- read.table("Data/genes_descr_control/best_hit_blast_result_Sl_predicted_exons.txt", sep=",", stringsAsFactors=FALSE)
+
+
+###### AT gene matches 
+
+AT.id <- read.table(paste0(dataPath, "Data_2013-07-01/best_hit_blast_result_Sl_predicted_exons.txt"), sep=",", stringsAsFactors=FALSE)
 head(AT.id)
 
-genes.description <- read.table("Data/genes_descr_control/genes_description.xls", sep="\t", header=T)
+
+
+###### gene descriptions
+
+library(org.At.tair.db)
+
+syms <- mget(AT.id[,2], org.At.tairSYMBOL)
+syms <- sapply(syms, function(u) if(is.na(u[1])) NA else paste(u,collapse=","))
+AT.id$at_symbol <- syms
+
+tfd <- read.table(paste0(dataPath, "Data_2013-07-01/TAIR10_functional_descriptions"),sep="\t", header=TRUE, quote="", comment.char="", stringsAsFactors=FALSE)
+
+t10id <- gsub("\\.[1-9]","",tfd$Model_name)
+m <- match(AT.id[,2],t10id)
+
+AT.id$description <- as.character(tfd$Short_description[m])
+
+
+genes.description <- merge(data.frame(rownames(x)), AT.id, by=1, all.x=T)
+
+genes.description <- genes.description[,c(1,2,6,7)]
+
+colnames(genes.description) <- c( "ID", "AT_ID", "AT_symbol", "Description")
+
+write.table(genes.description, paste0(dataPath, "Data_2013-07-01/genes_description.xls"), sep="\t", quote=F, row.names=F)
+
+
+genes.description <- read.table(paste0(dataPath, "Data_2013-07-01/genes_description.xls"), sep="\t", header=T)
 head(genes.description)
 
-### Flowering genes - Table S4
-Athaliana.flowering.genes <- read.table("Data/genes_descr_control/gene_list_flowering_related_MolEcol_Athaliana_S4.csv", sep=",", header=T, stringsAsFactors=FALSE, skip=1)
+
+
+### Flowering genes - Table S4 from MolEcol paper
+Athaliana.flowering.genes <- read.table(paste0(dataPath,"GeneControlSets/Flowering_Genes/gene_list_flowering_related_MolEcol_Athaliana_S4.csv"), sep=",", header=T, stringsAsFactors=FALSE, skip=1)
 Athaliana.flowering.genes[,1] <- gsub(" ", "", Athaliana.flowering.genes[,1])
+Athaliana.flowering.genes <- data.frame(AT_ID = Athaliana.flowering.genes[,1], Flowering = "TRUE")
 
 
-genes.full.description <- read.table("Data/genes_descr_control/genes_description_full.csv", header=T, sep=";", stringsAsFactors=F)
+### Drought responce genes 
 
-UP.genes <- read.table("Data/genes_descr_control/mDr_Day10_drought_up_regulated_genes_Harb_etal.csv", sep=";", header=T, stringsAsFactors=FALSE)
-DOWN.genes <- read.table("Data/genes_descr_control/mDr_Day10_drought_down_regulated_genes_Harb_etal.csv", sep=";", header=T, stringsAsFactors=FALSE)
-Drought.genes <- rbind(UP.genes[,1:3], DOWN.genes[,1:3])
-names(Drought.genes) <- c("AT_ID", "Drought_regulation", "Description3")
+UP.genes <- read.table(paste0(dataPath,"GeneControlSets/Drought_Genes/mDr_Day10_drought_up_regulated_genes_Harb_etal.csv"), sep=";", header=T, stringsAsFactors=FALSE)
+DOWN.genes <- read.table(paste0(dataPath,"GeneControlSets/Drought_Genes/mDr_Day10_drought_down_regulated_genes_Harb_etal.csv"), sep=";", header=T, stringsAsFactors=FALSE)
+Drought.genes <- rbind(UP.genes[,1:2], DOWN.genes[,1:2])
+names(Drought.genes) <- c("AT_ID", "Drought_regulation")
 
-genes.full.description <- merge(genes.full.description, Drought.genes, all.x=TRUE)
+
+
+genes.full.description <- merge(genes.description, Drought.genes, by="AT_ID" ,all.x=TRUE)
+genes.full.description <- merge(genes.full.description, Athaliana.flowering.genes, by = "AT_ID", all.x = TRUE)
+
 rownames(genes.full.description) <- genes.full.description$ID
 
+write.table(genes.full.description, paste0(dataPath, "Data_2013-07-01/genes_description_full.xls"), sep="\t", quote=F, row.names=F)
 
-# save.image("Shimizu_workspace.Rdata")
+
+save(new.samps, x, flowered.samps, control.samps, trees.order, all.days, month.days, all.days.short, month.days.short, genes.full.description ,file = "Shimizu_workspace.Rdata")
+
+
+
+
+
+
+
+
+
 
 
 

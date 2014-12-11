@@ -5,56 +5,43 @@
 
 #####################################################################################################
 
-setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
+
+### load data
+
+RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+
+analysisPath <- "Analysis_2014-12-03"
+analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+dir.create(analysisPath, showWarnings = FALSE)
+setwd(analysisPath)
+
 load("Shimizu_workspace.Rdata")
 
 
-############################################
-### select genes for clustering
-############################################
 
-x.orig <- x
-new.samps.orig <- new.samps
-
-# elim.samps=c(flowered.samps, "K4_990_20081205", "K5_990_20090511")
-elim.samps=NULL
-x.orig <- x.orig[,new.samps.orig$sample_name]
-x <- x.orig[,!colnames(x.orig) %in% elim.samps]
-new.samps <- new.samps.orig[!rownames(new.samps.orig) %in% elim.samps, ]
+### do not consider 990 and 8212 because they were observed too few times
+elim.samps <- new.samps$sample_name[grepl(pattern = "990|8212", new.samps$sample_name)]
+x <- x[,!names(x) %in% elim.samps]
+new.samps <- new.samps[!new.samps$sample_name %in% elim.samps, ]
 
 all(colnames(x)==rownames(new.samps))
 
-library(limma)
+
+dim(x)
+
+
 library(edgeR)
+d <- DGEList(x, group=new.samps$tree_ID)
+d <- calcNormFactors(d)
 
-d.org <- DGEList(x, group=new.samps$tree_ID)
+# make sure a gene is expressed (CPM > 1) in more than 2 samples
+cps <- cpm(d, normalized.lib.sizes=TRUE)
+d <- d[ rowSums( cps > 10 ) > 10, ]
+dim(d$counts)
 
-# normalization between samples, default = "TMM"
-d.org <- calcNormFactors(d.org)
+dcpm <- cpm(d, normalized.lib.sizes=TRUE)
 
-### make sure a gene is expressed (CPM > 1) in more than 2 samples
-d.cpm.org <- cpm(d.org, normalized.lib.sizes=TRUE)
-dim(d.cpm.org)
-
-# sum(d.cpm.org["GID031739_3527284",] > 1)
-# sum( rowSums(d.cpm.org > 1) > 2 )
-
-d.org <- d.org[ rowSums(d.cpm.org > 1) > 2, ]
-d.cpm.org <- cpm(d.org, normalized.lib.sizes=TRUE)
-d.cpm.org.l <- log(d.cpm.org  + min(d.cpm.org [d.cpm.org  != 0]))
-
-count.data <- list()
-count.data$d.cpm.org <- d.cpm.org
-count.data$d.cpm.org.l <- d.cpm.org.l
-selected.genes <- list()
-selected.genes$all.genes <- rownames(d.cpm.org)
-selected.genes$AT.genes <- selected.genes$all.genes[selected.genes$all.genes %in% AT.id[,1]]
-
-
-write.table(data.frame(contigs=rownames(d.org$counts) , d.org$counts), "Clustering/Data_original.xls", quote=FALSE, sep="\t", row.names=FALSE)
-
-
-write.table(data.frame(contigs=rownames(d.cpm.org) , d.cpm.org), "Clustering/Data_normalized_cpm.xls", quote=FALSE, sep="\t", row.names=FALSE)
 
 
 
@@ -72,21 +59,20 @@ library(parallel)
 library(gtools)
 library(gplots) 
 library(RColorBrewer)
-source("/home/gosia/R/R_Shimizu_RNA_seq/heatmap2.r")
+source(paste0(RPath, "heatmap2.r"))
 
 
 
-source("/home/gosia/R/R_Shimizu_RNA_seq/Kmeans_clustering.R")
-# source("/home/gosia/R/R_Shimizu_RNA_seq/Kmeans_clustering_tmp.R")
+source(paste0(RPath, "Kmeans_clustering.R"))
 
-pam.x <- count.data$d.cpm.org
-#pam.x <- pam.x[1:200,]
+
+pam.x <- dcpm
 dim(pam.x)
 
 
 
 # all
-kmeans.clustering(pam.x, new.samps, genes.full.description, colors.wp, norm.method="norm", out.path="Clustering/Kmeans_all2/", out.name="CPM_norm_all", prior.nr.cl=10:50, mc.cores=15, ylim=c(-2, 5), clustering.samps="all", colors=c("yellow","blue"))
+kmeans.clustering(pam.x, new.samps, genes.full.description, colors.wp=new.samps, norm.method="norm", out.path="Clustering/Kmeans_all2/", out.name="CPM_norm_all", prior.nr.cl=30:31, mc.cores=1, ylim=c(-2, 5), clustering.samps="all", colors=c("yellow","blue"))
 
 
 

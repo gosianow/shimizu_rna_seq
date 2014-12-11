@@ -1,13 +1,13 @@
+#####################################################################################################
+# CAMERA Gene set testing
+# Modified 03 Dec 2014
 
 #####################################################################################################
 
-### CAMERA Gene set testing
-
-#####################################################################################################
-
-setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
+setwd("/home/Shared/data/seq/Shimizu_RNA_seq/Analysis_2014-12-03/")
 load("Shimizu_workspace.Rdata")
 
+library(limma)
 library(edgeR)
 
 ####
@@ -25,12 +25,6 @@ elim.samps = c(flowered.samps)
 plot.name="_ALL"
 
 ####
-
-
-
-####
-
-
 
 
 dir.create(plots.path, recursive=T, showWarnings = FALSE)
