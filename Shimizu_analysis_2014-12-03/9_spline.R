@@ -44,6 +44,8 @@ d <- calcNormFactors(d)
 # make sure a gene is expressed (CPM > 1) in more than 2 samples
 cps <- cpm(d, normalized.lib.sizes=TRUE)
 d <- d[ rowSums( cps > 10 ) > 10, ]
+# sum(rowSums( cps > 1 ) > 24)
+
 dim(d$counts)
 
 dcpm <- cpm(d, normalized.lib.sizes=TRUE)
@@ -60,83 +62,73 @@ weights <- normalize.counts(counts = log(cpm(d1, normalized.lib.sizes=TRUE)), no
 
 d.cpm <- dcpm.norm
 
+genes <- rownames(d.cpm)
+
+dspl <- vector("list", 4)
+dspl <- lapply(c(12, 6, 12, 11), function(n) matrix(0, length(genes), n) )
+names(dspl) <-  trees.order$legend 
+
+sd.spl <- matrix(0, length(genes), 4)
+colnames(sd.spl) <- trees.order$legend
 
 
-genes <- rownames(d.cpm)[1:20]
 
-
-
-
-
-pdf(paste0("Plots_Splines/" , "Spline_fitting" ,".pdf"), h=5, w=10)
+pdf(paste0("Plots_Splines/" , "Spline_fitting_01" ,".pdf"), h=5, w=10)
 
 for(j in 1:length(genes)){
-  # j=1
+  # j=3
   
   plot(0, type="n", main=paste0(genes[j]) ,xlim=c(min(new.samps$time_nr), max(new.samps$time_nr)), ylim=c(min(na.omit(d.cpm[genes[j], ])), max(na.omit(d.cpm[genes[j], ]))), xlab="Time", ylab="Gene Expression", xaxt = "n")
   axis(side=1, at=month.days[,2], labels=month.days[,1])
   rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], col = colors()[246])
   
   for(t in trees.order$legend){
-    # t=trees.order$legend[1]
+    # t=trees.order$legend[2]
     
     time <- new.samps$time_nr[new.samps$tree_legend == t]
     expr <- d.cpm[genes[j], new.samps$tree_legend == t]
-    w <- weights[genes[j], new.samps$tree_legend == t]
-    
+#     w <- weights[genes[j], new.samps$tree_legend == t]
     
     ### plot raw expression
     lines(time, expr , col=trees.order$color[trees.order$legend==t], type="b", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t]/2, lwd=1, lty = 3) 
     
     ### smooth with splines
-    sm.spl <- smooth.spline(time, expr, spar=0.4)
+
+#     sm.spl <- smooth.spline(time, expr, w = w , spar=0.4)
+sm.spl <- smooth.spline(time, expr , spar=0.4)
+
     lines(sm.spl, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4) 
-    
-    sm.spl <- smooth.spline(time, expr, w = w , spar=0.4)
-    lines(sm.spl, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4, lty=2) 
-    
-    
-#     sm.lw <- lowess(time, expr, f = 1/3, iter = 3, delta = 0.01 * diff(range(x)))
-#     lines(sm.l, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4, lty=2) 
-    
-    
-# library(splines)
-#  ### not satysfying fits
-# sm.poly = lm(expr ~ poly(time,4) )
-#     lines(time, predict(sm.poly, data.frame(time=time)), col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4, lty=3) 
-# 
-# 
-# sm.ns = lm(expr ~ ns(time,4) )
-# lines(time, predict(sm.ns, data.frame(time=time)), col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4, lty=4) 
 
-# #### does not work because too few points 
-# sm.k <- ksmooth(time, expr, bandwidth = 0.1)
-# lines(sm.k, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4, lty = 2) 
+dspl[[t]][j,] <- sm.spl$y
+sd.spl[j, t] <- sd(sm.spl$y)
 
+
+if(j == 1)
+  colnames(dspl[[t]]) <- paste0(unique(new.samps$short.name[new.samps$tree_legend == t]))  
 
   }
   legend("topright", legend = trees.order$legend, col=trees.order$color, cex=0.5, text.col=trees.order$color)
   
 
-
 }
-
 
 dev.off()
 
 
+dspl <- do.call(cbind, dspl)
+
+rownames(dspl) <- genes
+rownames(sd.spl) <- genes
+
+new.samps.spl <- unique(new.samps[-which(colnames(new.samps) %in% c("sample_num", "sample_name", "sample_ID"))])
+rownames(new.samps.spl) <- new.samps.spl$short.name
+
+new.samps.spl <- new.samps.spl[colnames(dspl),]
+
+new.samps.spl$sample_name <- new.samps.spl$short.name
 
 
-
-
-
-
-
-
-
-
-
-
+save(dspl, sd.spl, new.samps.spl, file = paste0("Plots_Splines/" , "Spline_fitting_01" ,".RData"))
 
 
 
