@@ -172,6 +172,7 @@ AT.id <- genes.full.description[!is.na(genes.full.description$AT_ID), c("ID","AT
 
 
 #elim.samps=c(flowered.samps)
+
 elim.samps=NULL
 x <- x[,!names(x) %in% elim.samps]
 new.samps <- new.samps[!new.samps$sample_name %in% elim.samps, ]
@@ -264,80 +265,4 @@ for(g in 1:nrow(AT.genes)){
 
 
 dev.off()
-
-
-# #####################################################################################################
-# 
-# ### PLOTS OF SELECTED GENES
-# 
-# #####################################################################################################
-# 
-# # have to load the workspace!
-# setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
-# load("Shimizu_workspace.Rdata")
-# 
-# source("/home/gosia/R/R_Shimizu_RNA_seq/Plot_function.R")
-# 
-# 
-# 
-# plot.data <- d.cpm
-# 
-# ### select genes for plotting
-# clustering.results <- read.table("Clustering/Kmeans_all/CPM_norm_all_kmeans_table.xls", sep="\t", header=T, stringsAsFactors=F)
-# tot.nr.cluster <- 32 
-# nr.cluster <- 24 #12
-# gene.cluster.ID <- clustering.results[clustering.results[,paste0("clustering", tot.nr.cluster)] == nr.cluster, c("ID","AT_ID")]
-# gene.cluster.AT_ID <- unique(na.omit(clustering.results[clustering.results[,paste0("clustering", tot.nr.cluster)] == nr.cluster, "AT_ID"]))
-# MolEcol.clustered.genes <- read.table("Data/genes_descr_control/gene_list_in_all_clusters_DEgenes_Mol_Ecol.csv", sep=";", header=T)
-# MolEcol.nr.cluster <- 1
-# gene.set.AT_ID <- unique(MolEcol.clustered.genes[MolEcol.clustered.genes[,2] == MolEcol.nr.cluster,1])
-# genesAT_ID <- intersect(gene.cluster.AT_ID, gene.set.AT_ID)
-# 
-# genesID <- gene.cluster.ID[gene.cluster.ID$AT_ID %in% genesAT_ID, "ID"]
-# 
-# 
-# samps.to.plot <- new.samps$sample_name
-# out.path <- "Plots_of_selected_genes"
-# out.name <- "Overlap_with_MolEcol_cluster1"
-# plot.WP=F
-# ylab="Gene expression in CPM"
-# 
-# 
-# 
-# plot.genes(plot.data=plot.data, genesID=genesID, new.samps=new.samps, samps.to.plot=samps.to.plot, genes.full.description=genes.full.description, trees.order=trees.order, month.days=month.days, out.path=out.path, out.name=out.name, plot.WP=plot.WP, ylab=ylab)
-# 
-# 
-# 
-# # plot negative control genes
-# 
-# 
-# setwd("/home/Shared/data/seq/Shimizu_RNA_seq/")
-# load("Shimizu_workspace.Rdata")
-# 
-# source("/home/gosia/R/R_Shimizu_RNA_seq/Plot_function.R")
-# 
-# all(colnames(x)==rownames(new.samps))
-# 
-# library(edgeR)
-# d <- DGEList(x, group=new.samps$tree_ID)
-# d <- calcNormFactors(d)
-# 
-# # make sure a gene is expressed (CPM > 1) in more than 2 samples
-# cps <- cpm(d, normalized.lib.sizes=TRUE)
-# 
-# 
-# 
-# plot.data <- cps
-# genesID <- neg.contrl.ID
-# 
-# samps.to.plot <- new.samps$sample_name
-# out.path <- "Plots_RUN_RUVSeq"
-# out.name <- "Negative_control_genes_Housekeeping"
-# plot.WP=F
-# ylab="Gene expression in CPM"
-# 
-# 
-# 
-# plot.genes(plot.data=plot.data, genesID=genesID, new.samps=new.samps, samps.to.plot=samps.to.plot, genes.full.description=genes.full.description, trees.order=trees.order, month.days=month.days, out.path=out.path, out.name=out.name, plot.WP=plot.WP, ylab=ylab)
-# 
 
