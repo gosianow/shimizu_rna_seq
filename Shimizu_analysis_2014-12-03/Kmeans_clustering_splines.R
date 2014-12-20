@@ -141,6 +141,57 @@ plot.expr <- function(new.samps, expr, trees.order, main="", ylim=c(0,1), month.
 } 
 
 
+### plot the gene expression and meteo variable of choice
+
+plot.expr.var <- function(new.samps, expr, trees.order, main="", ylim=c(0,1), month.days, var = "Water.Potential"){
+  
+  
+  VAR.org <- new.samps[,var]
+  VAR.scaled <- normalize.counts(counts=t(as.matrix(VAR.org)), norm.method="range", c=ylim[1], d=ylim[2])
+  VAR.at <- seq(0, 1, by=0.1)
+  VAR.at <- VAR.at[VAR.at <= max(VAR.org,na.rm=T ) & VAR.at >= min(VAR.org, na.rm=T)]
+  VAR.at.scaled <- normalize.counts(counts=t(as.matrix(c(VAR.org, VAR.at))), norm.method="range", c=ylim[1], d=ylim[2])
+  VAR.at.scaled <- VAR.at.scaled[-(1:length(VAR.org))]
+  
+  #par()$mar
+  par(mar=c(5.1,4.1,4.1,5.1))
+  
+  plot(0, type="n", main=main , xlim=c(min(new.samps$time_nr), max(new.samps$time_nr)), ylim=ylim, xlab="Time", ylab="Normalized Gene Expression", xaxt = "n")
+  axis(side=1, at=month.days[,2], labels=month.days[,1])
+  ## VAR
+  axis(side=4, at=VAR.at.scaled, labels=VAR.at, las=1)
+  mtext(var, side=4, line=3, las=0)
+  
+  rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], col = colors()[246])
+  
+  trees.order <- trees.order[trees.order$legend %in% unique(new.samps$tree_legend), ]
+  
+  for(t in trees.order$legend){
+    
+    if(!is.matrix(expr)){
+      
+      lines(new.samps$time_nr[new.samps$tree_legend == t], expr[new.samps$tree_legend == t] , col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=5)
+      
+      # VAR
+      lines(new.samps$time_nr[new.samps$tree_legend == t],  VAR.scaled[ new.samps$tree_legend == t], col=trees.order$color[trees.order$legend==t], lwd=1, lty=3) 
+      
+      
+    }else{
+      
+      for(r in 1:nrow(expr)){        
+        lines(new.samps$time_nr[new.samps$tree_legend == t], expr[r, new.samps$tree_legend == t] , col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=1)            
+      }
+      
+    }
+    
+  }
+  
+  legend("topright", legend = trees.order$legend, col=trees.order$color, cex=0.8, text.col=trees.order$color) 
+  
+} 
+
+
+
 
 
 plot.boxplots <- function(new.samps, expr, trees.order, main="", ylim=c(0,1), month.days){
@@ -256,6 +307,31 @@ for(c in 1:length(cl.ordR)){
 
 dev.off()
 
+
+write.table(cl.ordR, file = paste0(out.cl, out.name,"_ClustOrder.txt"), quote = FALSE, sep = "\t", col.names = FALSE)
+
+
+
+  pdf(paste0(out.cl, out.name,"_Avg_Expr_VAR.pdf"), w=10, h=5) 
+
+### to keep the order from top to bottom on heatmap
+cl.ordR <- rev(cl.ord)
+cent.hcR <- cent.hc[cl.ordR, ]
+
+all(rownames(samps) == colnames(cent.hcR))
+
+for(c in 1:length(cl.ordR)){
+  # c=1
+  
+  expr <- cent.hcR[ c, ]
+  main <- paste0("Cluster ", cl.ordR[c], " , Size: ", size[cl.ordR[c]], " genes")
+  
+  plot.expr.var(new.samps = samps, expr, trees.order, main, ylim, month.days, var = "Water.Potential")
+  
+  
+}
+
+dev.off()
 
 clust <- paste0("CL", allClusters[[i]]$cluster)
 
