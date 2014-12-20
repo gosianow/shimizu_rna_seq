@@ -7,17 +7,25 @@
 
 ### load data
 
-RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
-dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+# dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# analysisPath <- "Analysis_2014-12-03"
+# analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
 
+RPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/Data/"
 analysisPath <- "Analysis_2014-12-03"
-analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+analysisPath <- paste0("/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/", analysisPath)
+
+
 dir.create(analysisPath, showWarnings = FALSE)
 setwd(analysisPath)
 
 load("Shimizu_workspace.Rdata")
 
-dir.create("Plots_Splines/", showWarnings=F, recursive=T)
+out.dir <- "Plots_Splines/"
+dir.create(out.dir, showWarnings=F, recursive=T)
+
 
 source(paste0(RPath, "Kmeans_clustering_splines.R"))
 
@@ -123,8 +131,8 @@ colnames(m.spl) <- trees.order$legend
 spar=0.3
 
 out.path <- "Plots_Splines/Spline_fitting_01/"
-
 dir.create(out.path, showWarnings=F, recursive=T)
+
 
 for(j in 1:length(genes)){
   # j=3
