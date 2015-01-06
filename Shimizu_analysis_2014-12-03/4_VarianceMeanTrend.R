@@ -93,7 +93,7 @@ dev.off()
 
 }
 
-#################################
+################################# SD
 
 v <- NULL
 m <- NULL
@@ -130,7 +130,7 @@ save(s, file = paste0(out.dir, "SDMeanScale.RData"))
 
 
 
-#################################
+################################# ABS
 
 v <- NULL
 m <- NULL
@@ -151,10 +151,12 @@ s <- smooth.spline(l$x, l$y, spar=2/3)
 
 png(paste0(out.dir, "ABSMeanScale50.png"), 600, 600)
 
-smoothScatter( m, v , nrpoints = Inf, nbin = 500, xlab="mean" , ylab="sd", main = paste0(pairs[[i]], collapse = " , ") , xlim=c(0, 50), ylim=c(0, 50))
+smoothScatter( m, v , nrpoints = Inf, nbin = 500, xlab="mean" , ylab="Max - Min", main = "", xlim=c(0, 400), ylim=c(0, 400), cex.lab = 1.6, cex.axis = 1.6)
 abline(a = 0, b = 1, col = "red")
 lines(l, col = "blue")
 lines(s, col = "green")
+lines(s$x, s$y * 3 , col = "blue", lwd = 4)
+
 
 dev.off()
 
@@ -164,6 +166,9 @@ d <- unique(data.frame(mean = l$x, sd = l$y))
 
 write.table(d, paste0(out.dir, "ABSMeanScale.txt"), quote = FALSE, row.names = FALSE)
 save(s, file = paste0(out.dir, "ABSMeanScale.RData"))
+
+
+
 
 
 #################################

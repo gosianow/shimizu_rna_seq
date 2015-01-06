@@ -7,11 +7,17 @@
 
 ### load data
 
-RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
-dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+# dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# analysisPath <- "Analysis_2014-12-03"
+# analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
 
+RPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/Data/"
 analysisPath <- "Analysis_2014-12-03"
-analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+analysisPath <- paste0("/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/", analysisPath)
+
+
 dir.create(analysisPath, showWarnings = FALSE)
 setwd(analysisPath)
 
@@ -28,13 +34,14 @@ dim(x)
 
 
 library(edgeR)
+
 d <- DGEList(x, group=new.samps$tree_ID)
 d <- calcNormFactors(d)
 
 # make sure a gene is expressed (CPM > 1) in more samples
 cps <- cpm(d, normalized.lib.sizes=TRUE)
 
-d <- d[ rowSums( cps > 10 ) > 10, ]
+d <- d[ rowSums( cps > 1 ) > 53, ]
 dim(d$counts)
 
 d$counts  <- d$counts + 1
@@ -78,15 +85,17 @@ dev.off()
 
 library(corrgram)
 
+
+
 pdf(paste0("Plots_Correlation/" , "Corrgram" ,".pdf"), 10, 10)
 
-corrgram(dcpm[,new.samps$tree_ID %in% c("970")], order=TRUE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("970"), "time_ch"])
+# corrgram(dcpm[,new.samps$tree_ID %in% c("970")], order=TRUE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("970"), "time_ch"])
 
-corrgram(dcpm[,new.samps$tree_ID %in% c("970")], order=FALSE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("970"), "time_ch"])
+corrgram(dcpm[,new.samps$tree_ID %in% c("970")], order=TRUE, lower.panel= panel.pie, upper.panel = NULL, text.panel=panel.txt, main="970", labels = new.samps[new.samps$tree_ID %in% c("970"), "time_ch"],  col.regions=rainbow)
 
-corrgram(dcpm[,new.samps$tree_ID %in% c("8266")], order=TRUE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("8266"), "time_ch"])
+# corrgram(dcpm[,new.samps$tree_ID %in% c("8266")], order=TRUE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("8266"), "time_ch"])
 
-corrgram(dcpm[,new.samps$tree_ID %in% c("8266")], order=FALSE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="", labels = new.samps[new.samps$tree_ID %in% c("8266"), "time_ch"], col.regions=colorRampPalette(c("red","salmon","white","royalblue","navy")))
+corrgram(dcpm[,new.samps$tree_ID %in% c("8266")], order=TRUE, lower.panel=panel.pie, upper.panel = NULL , text.panel=panel.txt, main="8266", labels = new.samps[new.samps$tree_ID %in% c("8266"), "time_ch"], col.regions=rainbow)
 
 dev.off()
 

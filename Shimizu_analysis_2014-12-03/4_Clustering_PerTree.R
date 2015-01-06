@@ -44,7 +44,7 @@ trees <- as.character(unique(new.samps.red$tree_ID))
 
 
 for(i in 1:length(trees)){
-  # i = 3
+  # i = 4
   
   x <- x.red[, new.samps.red$tree_ID == trees[i]]
   samps <- new.samps.red[new.samps.red$tree_ID == trees[i], ]
@@ -52,7 +52,7 @@ for(i in 1:length(trees)){
   ### Filtering
   
   x <- x[ MinCPM.tree[, trees[i]] & FC.tree[, trees[i]] & MinABS.tree[, trees[i]], ]
-  dim(x)
+  print(dim(x))
   
   d <- DGEList(x)
   d <- calcNormFactors(d)

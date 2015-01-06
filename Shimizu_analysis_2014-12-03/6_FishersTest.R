@@ -41,12 +41,12 @@ name.out <- "Athaliana_flowering_genes"
 
 
 trees <- as.character(unique(new.samps.red$tree_ID))
-nr.clusters <- c(17, 9, 16, 15)
+nr.clusters <- c(19, 9, 16, 15)
 names(nr.clusters) <- trees
 
 
 for(i in 1:length(trees)){
-  # i = 4
+  # i = 1
   
   go.name <- paste0("Kmeans_tree", trees[i])
   
@@ -139,7 +139,7 @@ gene.sets.dir <- paste0(dataPath, "GeneControlSets/gene_sets_for_Gosia/")
 gene.sets.all <- dir(gene.sets.dir)
 
 trees <- as.character(unique(new.samps.red$tree_ID))
-nr.clusters <- c(17, 9, 16, 15)
+nr.clusters <- c(19, 9, 16, 15)
 names(nr.clusters) <- trees
 
 
