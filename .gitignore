@@ -3,3 +3,5 @@
 .Rproj.user
 # History files
 .Rhistory
+._*
+.DS*
