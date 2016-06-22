@@ -7,17 +7,25 @@
 
 ### load data
 
-RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
-dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# RPath <- "/home/gosia/R/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+# dataPath <- "/home/Shared/data/seq/Shimizu_RNA_seq/Data/"
+# analysisPath <- "Analysis_2014-12-03"
+# analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
 
+RPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/R_Shimizu_RNA_seq/Shimizu_analysis_2014-12-03/"
+dataPath <- "/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/Data/"
 analysisPath <- "Analysis_2014-12-03"
-analysisPath <- paste0("/home/Shared/data/seq/Shimizu_RNA_seq/", analysisPath)
+analysisPath <- paste0("/Users/gosia/Dropbox/Shimizu_time_course_RNA_seq/Shimizu_RNA_seq/", analysisPath)
+
+
 dir.create(analysisPath, showWarnings = FALSE)
 setwd(analysisPath)
 
 load("Shimizu_workspace.Rdata")
 
-dir.create("Plots_Splines/", showWarnings=F, recursive=T)
+out.dir <- "Plots_Splines/"
+dir.create(out.dir, showWarnings=F, recursive=T)
+
 
 source(paste0(RPath, "Kmeans_clustering_splines.R"))
 
@@ -91,18 +99,19 @@ dcpm <- cpm(d, normalized.lib.sizes=TRUE)
 
 ########### log transformation 
 
-# d$counts <- d$counts + 1
-# dcpm <- cpm(d, normalized.lib.sizes=TRUE)
-# dcpm <- log2(dcpm)
+d$counts <- d$counts
+dcpm <- cpm(d, normalized.lib.sizes=TRUE)
+dcpm <- log2(dcpm + 1)
 
 
 ########### normalize to 01
 
 dcpm.norm <- normalize.counts(counts = dcpm, norm.method = "01")
 
-d1 <- d
-d1$counts <- d1$counts + 1
-weights <- normalize.counts(counts = log(cpm(d1, normalized.lib.sizes=TRUE)), norm.method = "01")
+# ### weights if weighted splines
+# d1 <- d
+# d1$counts <- d1$counts + 1
+# weights <- normalize.counts(counts = log(cpm(d1, normalized.lib.sizes=TRUE)), norm.method = "01")
 
 d.cpm <- dcpm.norm
 
@@ -120,14 +129,16 @@ m.spl <- matrix(0, length(genes), 4)
 colnames(m.spl) <- trees.order$legend
 
 
-spar=0.3
+spar=0.1
 
-out.path <- "Plots_Splines/Spline_fitting_01/"
 
+out.path <- "Plots_Splines/Spline_fitting_01_sp0.1_CPM_predict/"
 dir.create(out.path, showWarnings=F, recursive=T)
+
 
 for(j in 1:length(genes)){
   # j=3
+  
   pdf(paste0(out.path, genes[j],".pdf"), h=5, w=10)
   
   plot(0, type="n", main=paste0(genes[j]) ,xlim=c(min(new.samps$time_nr), max(new.samps$time_nr)), ylim=c(min(na.omit(d.cpm[genes[j], ])), max(na.omit(d.cpm[genes[j], ]))), xlab="Time", ylab="Gene Expression", xaxt = "n")
@@ -139,29 +150,32 @@ for(j in 1:length(genes)){
     
     time <- new.samps$time_nr[new.samps$tree_legend == t]
     expr <- d.cpm[genes[j], new.samps$tree_legend == t]
-#     w <- weights[genes[j], new.samps$tree_legend == t]
+    #     w <- weights[genes[j], new.samps$tree_legend == t]
     
     ### plot raw expression
     lines(time, expr , col=trees.order$color[trees.order$legend==t], type="b", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t]/2, lwd=1, lty = 3) 
     
     ### smooth with splines
-
-#     sm.spl <- smooth.spline(time, expr, w = w , spar=spar)
-sm.spl <- smooth.spline(time, expr , spar=spar)
-
-    lines(sm.spl, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4) 
-
-dspl[[t]][j,] <- sm.spl$y
-sd.spl[j, t] <- sd(sm.spl$y)
-m.spl[j, t] <- mean(sm.spl$y)
-
-if(j == 1)
-  colnames(dspl[[t]]) <- paste0(unique(new.samps$short.name[new.samps$tree_legend == t]))  
-
+    
+    #     sm.spl <- smooth.spline(time, expr, w = w , spar=spar)
+    sm.spl <- smooth.spline(time, expr , spar=spar)
+    
+    sm.p <- predict(sm.spl, x = sort(all.days$days.nr[all.days$days.nr <= max(time) & all.days$days.nr >= min(time)], decreasing = FALSE))
+    
+    lines(sm.p, col=trees.order$color[trees.order$legend==t], type="l", pch=trees.order$pch[trees.order$legend==t], cex=trees.order$cex[trees.order$legend==t], lwd=4) 
+    
+    dspl[[t]][j,] <- sm.spl$y
+    sd.spl[j, t] <- sd(sm.spl$y)
+    m.spl[j, t] <- mean(sm.spl$y)
+    
+    if(j == 1)
+      colnames(dspl[[t]]) <- paste0(unique(new.samps$short.name[new.samps$tree_legend == t]))  
+    
   }
   legend("topright", legend = trees.order$legend, col=trees.order$color, cex=0.5, text.col=trees.order$color)
   
-dev.off()
+  dev.off()
+  
 }
 
 

@@ -1,4 +1,4 @@
-Shimizu_RNA_seq
+Drought experiment
 ===============
 
-Differential gene expression analysis of Shorea Beccariana
+Time series differential gene expression analysis of Shorea leprosula
