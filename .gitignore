@@ -2,6 +2,6 @@
 .DS_Store
 *.DS_Store
 .Rproj.user
-.Rhistory
+.Rhistory*
 *.Rproj
 *._*
