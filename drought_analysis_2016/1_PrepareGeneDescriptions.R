@@ -42,10 +42,12 @@ setwd(rwd)
 ##############################################################################
 
 
-### AT gene matches 
+### Annotation S. leprosula <-> A. thaliana  gene matches 
 
 AT.id <- read.table(paste0(data_dir, "/Data_2016-06-22/orig/Blastp_result_against_Athaliana.txt"), sep="\t", stringsAsFactors = FALSE, header = FALSE)
 head(AT.id)
+
+colnames(AT.id)[1] <- "sl_id"
 
 AT.id$at_id <- strsplit2(AT.id[,2], "\\.")[ ,1]
 
@@ -61,20 +63,17 @@ AT.id$at_symbol <- syms
 
 tfd <- read.table(paste0(data_dir, "/Data_2016-06-22/orig/TAIR10_functional_descriptions.txt"), sep = "\t", header = TRUE, quote = "", comment.char = "", stringsAsFactors = FALSE)
 
+m <- match(AT.id[, "at_id"], gsub("\\.[1-9]", "", tfd$Model_name))
 
-t10id <- gsub("\\.[1-9]", "", tfd$Model_name)
-m <- match(AT.id[, "at_id"], t10id)
-
-AT.id$description <- as.character(tfd$Short_description[m])
+AT.id$at_description_tair10 <- as.character(tfd$Short_description[m])
 
 ### Remove problematic symbols from description
-AT.id$description <- gsub("[^[:alnum:],()+/\\-]", " ", AT.id$description)
+AT.id$at_description_tair10 <- gsub("[^[:alnum:],()+/\\-]", " ", AT.id$at_description_tair10)
 AT.id$at_symbol <- gsub("[^[:alnum:],()+/\\-]", " ", AT.id$at_symbol)
 
 
-genes.description <- AT.id[, c("V1", "at_id", "at_symbol", "description")]
+genes.description <- AT.id[, c("sl_id", "at_id", "at_symbol", "at_description_tair10")]
 
-colnames(genes.description) <- c( "ID", "AT_ID", "AT_symbol", "Description")
 
 write.table(genes.description, paste0(data_dir, "/Data_2016-06-22/genes_description.xls"), sep="\t", quote = FALSE, row.names = FALSE)
 
@@ -85,31 +84,37 @@ Athaliana.flowering.genes <- read.table(paste0(data_dir,"/GeneControlSets/Flower
 
 # Some clean up 
 Athaliana.flowering.genes[,1] <- gsub(" ", "", Athaliana.flowering.genes[,1])
-colnames(Athaliana.flowering.genes) <- c("AT_ID", "AT_NAME")
-Athaliana.flowering.genes$Flowering <- TRUE
+colnames(Athaliana.flowering.genes) <- c("at_id", "at_description_flowering")
+Athaliana.flowering.genes$flowering <- TRUE
+
+Athaliana.flowering.genes$at_description_flowering <- gsub("[^[:alnum:],()+/\\-]", " ", Athaliana.flowering.genes$at_description_flowering)
 
 
 
-### Drought responce genes 
+### Moderate drought responce genes 
 
 UP.genes <- read.table(paste0(data_dir,"/GeneControlSets/Drought_Genes/mDr_Day10_drought_up_regulated_genes_Harb_etal.csv"), sep=";", header=T, stringsAsFactors=FALSE)
 
 DOWN.genes <- read.table(paste0(data_dir,"/GeneControlSets/Drought_Genes/mDr_Day10_drought_down_regulated_genes_Harb_etal.csv"), sep=";", header=T, stringsAsFactors=FALSE)
 
 
-Drought.genes <- rbind(UP.genes[, c("Gene", "mDr.Day10")], DOWN.genes[, c("Gene", "mDr.Day10")])
+Drought.genes <- rbind(UP.genes[, c("Gene", "mDr.Day10", "Function")], DOWN.genes[, c("Gene", "mDr.Day10", "Function")])
 
-names(Drought.genes) <- c("AT_ID", "Drought_regulation")
+names(Drought.genes) <- c("at_id", "drought_regulation", "at_description_drought")
+
+Drought.genes$at_description_drought <- gsub("[^[:alnum:],()+/\\-]", " ", Drought.genes$at_description_drought)
 
 
 
 ### Merge gene descriptions
 
-genes.full.description <- merge(genes.description, Drought.genes, by="AT_ID", all.x=TRUE, sort = FALSE)
+genes.full.description <- merge(genes.description, Drought.genes, by="at_id", all.x=TRUE, sort = FALSE)
 
 
-genes.full.description <- merge(genes.full.description, Athaliana.flowering.genes, by = "AT_ID", all.x = TRUE, sort = FALSE)
+genes.full.description <- merge(genes.full.description, Athaliana.flowering.genes, by = "at_id", all.x = TRUE, sort = FALSE)
 
+### IMPORTANT to take unique bcs there are duplicates after merge
+genes.full.description <- unique(genes.full.description)
 
 
 write.table(genes.full.description, paste0(data_dir, "/Data_2016-06-22/genes_description_full.xls"), sep="\t", quote=F, row.names=F)

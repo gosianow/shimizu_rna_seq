@@ -1,7 +1,7 @@
 #####################################################################################################
 ### BioC 3.0
 ### clustering the genes from controll sets (flowering genes, drought responce, Mol Ecol clusters)
-
+### Clustering spline fitted data 
 #####################################################################################################
 
 
@@ -331,19 +331,6 @@ allClusters <- kmeans.clustering.splines(x, samps, genes.full.description, out.p
 load(paste0(out.path ,"Kmeans_allClusters.RData"))
 
 plot.kmeans.clustering.splines(allClusters, x, samps, genes.full.description, out.path, out.name, prior.nr.cl, ylim)
-
-
-
-##########################################################################################################
-## recluster MolEcol clusters
-##########################################################################################################
-
-
-
-
-
-
-
 
 
 

@@ -58,7 +58,7 @@ dcpm <- cpm(d, normalized.lib.sizes=TRUE)
 
 
 
-
+### Plot mean and sd in log scale
 
 for(i in 1:length(pairs)){
   # i = 1
@@ -74,6 +74,8 @@ v <- apply(dcpm[, pairs[[i]]], 1, sd)
   dev.off()
 }
 
+
+### Plot mean and sd between 0 and 50 and fit the lowess curve
 
 for(i in 1:length(pairs)){
   # i = 1
@@ -93,7 +95,7 @@ dev.off()
 
 }
 
-################################# SD
+### As above but for all the pairs
 
 v <- NULL
 m <- NULL
@@ -130,7 +132,7 @@ save(s, file = paste0(out.dir, "SDMeanScale.RData"))
 
 
 
-################################# ABS
+### ABS - Plot mean expression and max-min for all the pairs; fit lowess and smooth spline 
 
 v <- NULL
 m <- NULL
@@ -171,7 +173,7 @@ save(s, file = paste0(out.dir, "ABSMeanScale.RData"))
 
 
 
-#################################
+### Plot FC and mean
 
 
 for(i in 1:length(pairs)){
@@ -193,7 +195,7 @@ for(i in 1:length(pairs)){
 
 
 
-########################### log
+### CPM is in log
 
 dcpm <- log2(cpm(d, normalized.lib.sizes=TRUE))
 

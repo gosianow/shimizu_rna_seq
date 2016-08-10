@@ -489,7 +489,7 @@ library(stringr)
 month.days.short <- all.days.short[str_sub(all.days.short[,1], 1, 2)=="01",]
 
 
-# colors reprezening WP level 
+# colors representing WP level 
 
 colors.wp <- new.samps[, c("sample_name", "Water.Potential")]
 colors.wp$Water.Potential <- 100*round(colors.wp$Water.Potential, digits=2)
@@ -504,7 +504,7 @@ rownames(new.samps) <- new.samps$sample_name
 
 
 
-# colors reprezening WP level 
+# colors representing time
 colors.palette <- as.character( colorRampPalette(c("orange","darkgreen"))(nrow(all.days.short)))
 names(colors.palette) <- all.days.short$days.nr
 

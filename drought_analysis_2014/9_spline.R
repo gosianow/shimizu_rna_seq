@@ -27,9 +27,6 @@ out.dir <- "Plots_Splines/"
 dir.create(out.dir, showWarnings=F, recursive=T)
 
 
-source(paste0(RPath, "Kmeans_clustering_splines.R"))
-
-
 ###############################################
 
 ### do not consider 990 and 8212 because they were observed too few times

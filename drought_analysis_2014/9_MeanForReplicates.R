@@ -35,7 +35,7 @@ load(paste0("Plots_VarianceMeanTrend/", "ABSMeanScale.RData"))
 
 ###############################################
 
-### do not consider 990 and 8212 because they were observed too few times
+### do not consider 990 and 8212 because they were observed too few times and 8266 flower bud
 elim.samps <- c(new.samps$sample_name[grepl(pattern = "990|8212", new.samps$sample_name)], new.samps$sample_name[grepl(pattern = "flower_bud", new.samps$developmental_stage)])
 
 x <- x[,!names(x) %in% elim.samps]
